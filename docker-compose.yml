@@ -10,17 +10,19 @@ services:
       KAFKA_BROKER_ID: -1
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_4LW_COMMANDS_WHITELIST: "*"
     healthcheck:
-      test: ["CMD", "bash", "-c", "echo ruok | nc localhost 2181"]
+      test: ["CMD", "bash", "-c", "echo srvr | nc localhost 2181"]
       interval: 10s
-      timeout: 5s
-      retries: 5
+      timeout: 10s
+      retries: 10
+      start_period: 40s
     networks:
       - cdc-net
 
   # 🦩 Kafka Broker
   broker:
-    image: confluentinc/cp-server:7.9.0
+    image: confluentinc/cp-kafka:7.9.0
     user: root
     hostname: broker
     container_name: broker1
@@ -46,10 +48,11 @@ services:
     volumes:
       - ./kafka_data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD", "bash", "-c", "nc -z localhost 9092"]
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9092"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 40s
     networks:
       - cdc-net
 
@@ -72,6 +75,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 40s
     networks:
       - cdc-net
 
@@ -100,6 +104,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 60s
     networks:
       - cdc-net
 
@@ -149,8 +154,10 @@ services:
     image: debezium/connect:2.6
     container_name: connect
     depends_on:
-      - broker
-      - postgres
+      broker:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     ports:
       - "8083:8083"
     environment:
@@ -173,8 +180,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8083/"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 30s # Cho nó 30s để khởi động
+      retries: 10
+      start_period: 60s
     networks:
       - cdc-net
 
