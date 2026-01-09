@@ -42,7 +42,7 @@ docker logs -f airflow-webserver
 
 **Recommended Startup Order**
 
-- **Why:** the stack has dependencies (Zookeeper → Kafka broker → Schema Registry/Connect → processing/sinks). Starting core services in order avoids race conditions and missing topics.
+- **Why:** the stack has dependencies (Zookeeper → Kafka broker → Schema Registry/Connect → processing/sinks). Starting core services in order avoids race conditions and missing topics. Could also avoid RAM related problems. You can try to increase Swap Memory.
 - **Recommended sequence (examples):**
 
 ```bash
@@ -151,12 +151,3 @@ kafkacat -b localhost:9092 -L -J | jq '.topics[] | select(.topic | test("cdc\\."
 # Query ClickHouse counts
 curl -s -u admin:admin "http://localhost:8123/?query=SELECT%20count()%20FROM%20cdc_data.orders"
 ```
-
-**Next Steps / Optional**
-
-- Add a short README section linking to this `guide.md`.
-- I can add a small health-check script that probes all service endpoints and reports status — say if you want that.
-
----
-
-Created to consolidate the repository README, run steps, and troubleshooting advice.
